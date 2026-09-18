@@ -1,0 +1,5 @@
+_tools/
+*.md
+*.png
+*.log
+_dbgplay.html
