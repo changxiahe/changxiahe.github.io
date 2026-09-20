@@ -127,11 +127,8 @@
   <div class="vig vig-b"></div>
 
   <header class="topbar">
-    <div class="brand" id="brand">唱片机</div>
-    <div class="brand-sub" id="brandSub">转动唱片选歌，点封面播放</div>
+    <div class="brand" id="brand">Hi，Liwen</div>
   </header>
-
-  <div class="hint" id="hint">转动右下角的唱片选歌，点中间的封面播放</div>
 
   <div class="capt">
     <div class="capt-name" id="capName"></div>
@@ -167,19 +164,25 @@
    加歌多复制一行，减歌删整行，数量不限
    ========================================================= */
 var CONFIG = {
-  title: "唱片机",
-  subtitle: "转动唱片选歌，点封面播放",
-  hint: "转动右下角的唱片选歌，点中间的封面播放",
+  title: "Hi，Liwen",
   accent: "#007aff",
-  // true = 转动时就换背景图；false = 点播放才换
-  backgroundFollowsSelect: false,
+  // 背景图池：每次点击播放从中随机取一张，且不与上一张相同
+  backgrounds: [
+    "images/bg1.jpg",
+    "images/bg2.jpg",
+    "images/bg3.jpg",
+    "images/bg4.jpg",
+    "images/bg5.jpg",
+    "images/bg6.jpg",
+    "images/bg7.jpg"
+  ],
   tracks: [
-    { name: "Try", artist: "Asher Monroe", audio: "audio/track1.mp3", bg: "images/bg1.jpg", cover: "images/cover1.jpg" },
-    { name: "Saddle of My Heart", artist: "Teloupe", audio: "audio/track2.mp3", bg: "images/bg2.jpg", cover: "images/cover2.jpg" },
-    { name: "今晩はお月さん (今夜月绮丽)", artist: "humbert", audio: "audio/track3.mp3", bg: "images/bg3.jpg", cover: "images/cover3.jpg" },
-    { name: "Time Machine", artist: "mj apanay,aren park", audio: "audio/track4.mp3", bg: "images/bg4.jpg", cover: "images/cover4.jpg" },
-    { name: "Roses and Gold", artist: "Robin Jackson", audio: "audio/track5.mp3", bg: "images/bg5.jpg", cover: "images/cover5.jpg" },
-    { name: "Walk On Memories (梦回暮夜)", artist: "EXO", audio: "audio/track6.mp3", bg: "images/bg6.jpg", cover: "images/cover6.jpg" }
+    { name: "Try", artist: "Asher Monroe", audio: "audio/track1.mp3", cover: "images/cover1.jpg" },
+    { name: "Saddle of My Heart", artist: "Teloupe", audio: "audio/track2.mp3", cover: "images/cover2.jpg" },
+    { name: "今晩はお月さん (今夜月绮丽)", artist: "humbert", audio: "audio/track3.mp3", cover: "images/cover3.jpg" },
+    { name: "Time Machine", artist: "mj apanay,aren park", audio: "audio/track4.mp3", cover: "images/cover4.jpg" },
+    { name: "Roses and Gold", artist: "Robin Jackson", audio: "audio/track5.mp3", cover: "images/cover5.jpg" },
+    { name: "Walk On Memories (梦回暮夜)", artist: "EXO", audio: "audio/track6.mp3", cover: "images/cover6.jpg" }
   ]
 };
 
@@ -191,15 +194,12 @@ var CONFIG = {
   var ring = document.getElementById('ring');
   var covA = document.getElementById('covA');
   var covB = document.getElementById('covB');
-  var hintEl = document.getElementById('hint');
   var capName = document.getElementById('capName');
   var capArtist = document.getElementById('capArtist');
   var capNow = document.getElementById('capNow');
 
   document.title = CONFIG.title;
   document.getElementById('brand').textContent = CONFIG.title;
-  document.getElementById('brandSub').textContent = CONFIG.subtitle;
-  hintEl.textContent = CONFIG.hint;
   document.documentElement.style.setProperty('--accent', CONFIG.accent);
   var m = document.querySelector('meta[name="theme-color"]');
   if (m) m.setAttribute('content', CONFIG.accent);
@@ -235,23 +235,31 @@ var CONFIG = {
   });
 
   CONFIG.tracks.forEach(function (t) {
-    if (t.bg) { var i1 = new Image(); i1.src = t.bg; }
     if (t.cover) { var i2 = new Image(); i2.src = t.cover; }
   });
+  (CONFIG.backgrounds || []).forEach(function (u) { var ib = new Image(); ib.src = u; });
 
-  /* ---------- 背景 ---------- */
+  /* ---------- 背景（7 张随机池：每次点播放换一张，绝不与上一张相同）---------- */
   var layerA = document.getElementById('bgA'), layerB = document.getElementById('bgB');
-  var front = layerA, shownBg = -1;
-  function setBackground(i) {
-    if (i < 0 || !CONFIG.tracks[i].bg || shownBg === i) return;
-    shownBg = i;
+  var front = layerA, lastBg = -1;
+  function showBgImage(url) {
     var next = (front === layerA) ? layerB : layerA;
-    next.style.backgroundImage = 'url("' + CONFIG.tracks[i].bg + '")';
+    next.style.backgroundImage = 'url("' + url + '")';
     void next.offsetWidth;
     next.classList.add('show');
     front.classList.remove('show');
     front = next;
     stage.classList.add('on-image');
+  }
+  function setRandomBackground() {
+    var pool = CONFIG.backgrounds || [];
+    if (!pool.length) return;
+    var n = pool.length, idx;
+    if (n === 1) { idx = 0; }
+    else if (lastBg < 0) { idx = Math.floor(Math.random() * n); }
+    else { idx = (lastBg + 1 + Math.floor(Math.random() * (n - 1))) % n; }
+    lastBg = idx;
+    showBgImage(pool[idx]);
   }
 
   /* ---------- 状态 ---------- */
@@ -304,7 +312,6 @@ var CONFIG = {
       selected = near;
       setCover(near);
       refreshMeta();
-      if (CONFIG.backgroundFollowsSelect) setBackground(near);
       // 播放中不打断：只更新显示，声音照旧
     }
   }
@@ -323,7 +330,6 @@ var CONFIG = {
     discSpin.classList.toggle('singing', !!on);
     ring.classList.toggle('show', !!on);
     if (!on) setProgress(0);
-    if (on) hintEl.classList.add('gone');
     refreshNow();
     refreshMeta();
   }
@@ -349,13 +355,10 @@ var CONFIG = {
     var r = items[selected];
     if (playingIdx === selected && !r.audio.paused) { r.audio.pause(); return; }
     stopCurrent();                       // 换了歌才停，同一首不重置
-    setBackground(selected);
+    setRandomBackground();               // 每次点播放：随机换一张背景（不与上一张相同）
     var p = r.audio.play();
     if (p && p.catch) {
-      p.catch(function () {
-        hintEl.textContent = '播放被浏览器拦截，请再点一次封面';
-        hintEl.classList.remove('gone');
-      });
+      p.catch(function () { console.warn('播放被浏览器拦截，请再点一次封面'); });
     }
   }
 
@@ -470,6 +473,7 @@ var CONFIG = {
   setCover(0);
   refreshMeta();
   render();
+  setRandomBackground();   // 首屏就先随机铺一张背景
 })();
 </script>
 </body>
