@@ -103,16 +103,6 @@
   .cover-mask{position:absolute;inset:0;background:rgba(0,0,0,.28);transition:background .4s ease}
   .stage.playing .cover-mask{background:rgba(0,0,0,.10)}
 
-  .cbtn{position:absolute;left:calc(var(--dial) * .4);top:calc(var(--dial) * .4);
-        width:calc(var(--dial) * .2);height:calc(var(--dial) * .2);border-radius:50%;
-        background:rgba(0,0,0,.34);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
-        display:flex;align-items:center;justify-content:center;
-        box-shadow:0 0 0 1px rgba(255,255,255,.28)}
-  .cbtn svg{width:calc(var(--dial) * .079);height:calc(var(--dial) * .079);fill:#fff;display:block}
-  .cbtn .ico-pause{display:none}
-  .stage.sel-playing .cbtn .ico-play{display:none}
-  .stage.sel-playing .cbtn .ico-pause{display:block}
-
   /* ---------- 生日彩蛋（每年 9 月 29 日触发；预览：网址后加 ?bd=1）---------- */
   .bd{position:fixed;inset:0;z-index:9999;background:#000;display:none;
       align-items:center;justify-content:center;opacity:0;
@@ -160,10 +150,6 @@
       <div class="cover-layer" id="covA"></div>
       <div class="cover-layer" id="covB"></div>
       <div class="cover-mask"></div>
-    </div>
-    <div class="cbtn" id="cbtn">
-      <svg class="ico-play" viewBox="0 0 22 22"><path d="M6 3.2 18.4 11 6 18.8z"/></svg>
-      <svg class="ico-pause" viewBox="0 0 22 22"><rect x="6" y="4" width="3.6" height="14" rx="1.1"/><rect x="12.4" y="4" width="3.6" height="14" rx="1.1"/></svg>
     </div>
   </div>
 </div>
@@ -308,13 +294,6 @@ var CONFIG = {
     capName.textContent = t.name || '';
     capArtist.textContent = (t.artist || '') + (r.dur ? ' · ' + fmt(r.dur) : (r.err ? ' · 缺失' : ''));
     refreshNow();
-    refreshBtn();
-  }
-  // 按钮只反映"当前选中这一首"是否在播，避免播放中切歌时图标误导
-  function refreshBtn() {
-    var cur = items[selected];
-    var on = (playingIdx === selected) && cur && !cur.audio.paused;
-    stage.classList.toggle('sel-playing', !!on);
   }
   function refreshNow() {
     if (playingIdx >= 0 && playingIdx !== selected) {
@@ -360,7 +339,6 @@ var CONFIG = {
     setProgress(0);
     playingIdx = -1;
     refreshNow();
-    refreshBtn();
   }
 
   function stopCurrent() {
