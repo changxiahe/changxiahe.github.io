@@ -329,8 +329,7 @@ var CONFIG = {
     discSpin.classList.toggle('singing', !!on);
     ring.classList.toggle('show', !!on);
     if (!on) setProgress(0);
-    refreshNow();
-    refreshMeta();
+    refreshMeta();               // 内部已包含 refreshNow()
   }
   function onEnded(idx) {
     stage.classList.remove('playing');
@@ -449,6 +448,8 @@ var CONFIG = {
   }
 
   window.addEventListener('keydown', function (e) {
+    var bd = document.getElementById('bd');
+    if (bd && bd.classList.contains('on')) return;   // 彩蛋显示中，不响应键盘
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { stepTo(1); }
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { stepTo(-1); }
     else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
@@ -484,7 +485,10 @@ var CONFIG = {
   var img = document.getElementById('bdImg');
   if (!el) return;
 
+  var closed = false;
+
   function reveal() {
+    if (closed) return;           // 已被跳过则不再显示，避免"点掉之后又冒出来"
     el.classList.add('on');
     void el.offsetWidth;          // 强制重排，确保后面的过渡生效
     el.classList.add('show');
@@ -493,16 +497,16 @@ var CONFIG = {
   if (img && !img.complete) {
     img.addEventListener('load', reveal);
     img.addEventListener('error', reveal);
-    setTimeout(function () { if (!el.classList.contains('on')) reveal(); }, 1200);
+    setTimeout(reveal, 1200);     // 兜底：图片迟迟不来也先把这一层显示出来
   } else {
     reveal();
   }
 
-  var closed = false;
   function close() {
     if (closed) return;
     closed = true;
-    el.classList.remove('show');   // 整层淡出，露出主页面
+    el.style.pointerEvents = 'none';   // 淡出期间立即让出点击，主页面马上可操作
+    el.classList.remove('show');        // 整层淡出，露出主页面
     setTimeout(function () { el.classList.remove('on'); el.style.display = 'none'; }, 1300);
   }
   el.addEventListener('click', close);
