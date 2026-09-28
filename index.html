@@ -113,6 +113,21 @@
   .stage.sel-playing .cbtn .ico-play{display:none}
   .stage.sel-playing .cbtn .ico-pause{display:block}
 
+  /* ---------- 生日彩蛋（每年 9 月 29 日触发；预览：网址后加 ?bd=1）---------- */
+  .bd{position:fixed;inset:0;z-index:9999;background:#000;display:none;
+      align-items:center;justify-content:center;opacity:0;
+      transition:opacity 1.2s ease;cursor:pointer}
+  .bd.on{display:flex}
+  .bd.show{opacity:1}
+  .bd-img{width:100%;height:100%;object-fit:cover;
+          opacity:0;transform:scale(1.05);
+          transition:opacity 1.1s ease,transform 1.9s ease}
+  .bd.show .bd-img{opacity:1;transform:scale(1)}
+  .bd-tip{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 46px);
+          text-align:center;font-size:12px;letter-spacing:.28em;color:rgba(255,255,255,.5);
+          opacity:0;animation:bdBreath 2.8s ease-in-out 1.5s infinite}
+  @keyframes bdBreath{0%,100%{opacity:.22}50%{opacity:.6}}
+
   @media (min-width:560px){
     .stage{max-width:520px;margin:0 auto;box-shadow:0 0 60px rgba(0,0,0,.08)}
   }
@@ -128,7 +143,6 @@
 
   <header class="topbar">
     <div class="brand" id="brand">Hi , Liwen</div>
-    <div class="brand-sub" id="brandSub">你的長夏永不凋零</div>
   </header>
 
   <div class="capt">
@@ -152,6 +166,11 @@
       <svg class="ico-pause" viewBox="0 0 22 22"><rect x="6" y="4" width="3.6" height="14" rx="1.1"/><rect x="12.4" y="4" width="3.6" height="14" rx="1.1"/></svg>
     </div>
   </div>
+</div>
+
+<div class="bd" id="bd">
+  <img class="bd-img" id="bdImg" src="images/birthday.png" alt="">
+  <div class="bd-tip">轻触继续</div>
 </div>
 
 <script>
@@ -475,6 +494,41 @@ var CONFIG = {
   refreshMeta();
   render();
   setRandomBackground();   // 首屏就先随机铺一张背景
+})();
+
+/* ---------- 生日彩蛋：每年 9 月 29 日先显示祝福图，轻触后丝滑切入 ---------- */
+(function () {
+  var now = new Date();
+  var isBD = (now.getMonth() === 8 && now.getDate() === 29);   // 9 月 = 8（月份从 0 起算）
+  var force = /[?&]bd=1/.test(location.search);                // 预览用：网址后加 ?bd=1
+  if (!isBD && !force) return;
+  var el = document.getElementById('bd');
+  var img = document.getElementById('bdImg');
+  if (!el) return;
+
+  function reveal() {
+    el.classList.add('on');
+    void el.offsetWidth;          // 强制重排，确保后面的过渡生效
+    el.classList.add('show');
+  }
+
+  if (img && !img.complete) {
+    img.addEventListener('load', reveal);
+    img.addEventListener('error', reveal);
+    setTimeout(function () { if (!el.classList.contains('on')) reveal(); }, 1200);
+  } else {
+    reveal();
+  }
+
+  var closed = false;
+  function close() {
+    if (closed) return;
+    closed = true;
+    el.classList.remove('show');   // 整层淡出，露出主页面
+    setTimeout(function () { el.classList.remove('on'); el.style.display = 'none'; }, 1300);
+  }
+  el.addEventListener('click', close);
+  el.addEventListener('touchstart', close, { passive: true });
 })();
 </script>
 </body>
